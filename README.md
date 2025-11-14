@@ -95,7 +95,7 @@ src/
 
 ## 🎥 Watch Demo
 
-[![Watch the Demo](https://img.youtube.com/vi/tUhN6dBsyqI/80.jpg)](https://www.youtube.com/watch?v=tUhN6dBsyqI)
+[![Watch the Demo](https://img.youtube.com/vi/tUhN6dBsyqI/0.jpg)](https://www.youtube.com/watch?v=tUhN6dBsyqI)
 
 
 
