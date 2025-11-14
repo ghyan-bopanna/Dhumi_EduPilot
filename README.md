@@ -95,9 +95,7 @@ src/
 
 ## 🎥 Watch Demo
 
-<iframe width="560" height="315" 
-src="https://www.youtube.com/embed/tUhN6dBsyqI" 
-frameborder="0" allowfullscreen></iframe>
+[![Watch the Demo](https://img.youtube.com/vi/tUhN6dBsyqI/80.jpg)](https://www.youtube.com/watch?v=tUhN6dBsyqI)
 
 
 
