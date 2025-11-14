@@ -49,13 +49,16 @@ const Dashboard = ({ courseId, onNavigate }) => {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+    <div className="h-full overflow-y-auto bg-[#1e1e1e] text-[#d4d4d4] p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div className="flex items-center justify-between border-b border-[#3e3e42] pb-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#9f9f9f]">Command Center</p>
+            <h1 className="text-3xl font-semibold mt-1">Instructor Dashboard</h1>
+          </div>
           <button
             onClick={() => onNavigate('editor')}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+            className="px-4 py-2 border border-[#007acc] text-[#d4d4d4] rounded bg-[#1f1f1f] hover:bg-[#007acc] hover:text-white transition flex items-center gap-2 shadow"
           >
             Back to Editor
           </button>
@@ -63,52 +66,33 @@ const Dashboard = ({ courseId, onNavigate }) => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Students</p>
-                <p className="text-2xl font-bold mt-1">{stats.totalStudents}</p>
+          {[
+            { label: 'Total Students', value: stats.totalStudents, icon: Users, accent: '#007acc' },
+            { label: 'Active Modules', value: stats.activeModules, icon: BookOpen, accent: '#4ec9b0' },
+            { label: 'Completion Rate', value: `${stats.avgCompletionRate}%`, icon: TrendingUp, accent: '#c586c0' },
+            { label: 'Avg Score', value: `${stats.avgScore}%`, icon: CheckCircle2, accent: '#f1c40f' },
+          ].map((card, idx) => (
+            <div key={idx} className="bg-[#252526] border border-[#3e3e42] rounded-lg p-5 shadow-lg flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-wide text-[#9f9f9f]">{card.label}</p>
+                <card.icon className="w-6 h-6" style={{ color: card.accent }} />
               </div>
-              <Users className="w-8 h-8 text-blue-500" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Active Modules</p>
-                <p className="text-2xl font-bold mt-1">{stats.activeModules}</p>
+              <p className="text-2xl font-semibold text-[#d4d4d4]">{card.value}</p>
+              <div className="h-1 rounded bg-[#2d2d30]">
+                <div className="h-full rounded bg-[#007acc]" style={{ width: `${Math.min(100, parseInt(card.value, 10) || 40)}%` }} />
               </div>
-              <BookOpen className="w-8 h-8 text-green-500" />
             </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Completion Rate</p>
-                <p className="text-2xl font-bold mt-1">{stats.avgCompletionRate}%</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-purple-500" />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Score</p>
-                <p className="text-2xl font-bold mt-1">{stats.avgScore}%</p>
-              </div>
-              <CheckCircle2 className="w-8 h-8 text-orange-500" />
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Student Management */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Student Management</h2>
-            <label className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg cursor-pointer">
+        <div className="bg-[#1f1f1f] border border-[#3e3e42] rounded-xl shadow-xl p-6 space-y-6">
+          <div className="flex flex-wrap gap-3 items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Student Management</h2>
+              <p className="text-xs text-[#9f9f9f]">Upload cohorts, track progress, push personalized notes</p>
+            </div>
+            <label className="px-4 py-2 border border-[#007acc] rounded bg-[#252526] hover:bg-[#007acc] hover:text-white cursor-pointer transition shadow">
               {uploading ? 'Uploading...' : 'Upload CSV'}
               <input
                 type="file"
@@ -121,38 +105,38 @@ const Dashboard = ({ courseId, onNavigate }) => {
           </div>
 
           {students.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <div className="text-center py-16 text-[#9f9f9f] border border-dashed border-[#3e3e42] rounded-lg bg-[#252526]/50">
+              <Users className="w-10 h-10 mx-auto mb-4 text-[#3e3e42]" />
               <p>No students yet. Upload a CSV file to get started.</p>
-              <p className="text-sm mt-2">CSV should include: name, interests, learningStyle, scores, level</p>
+              <p className="text-xs mt-2 text-[#7f7f7f]">CSV should include: name, interests, learningStyle, scores, level</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+            <div className="overflow-auto border border-[#3e3e42] rounded-lg">
+              <table className="w-full text-sm">
+                <thead className="bg-[#252526] text-[#9f9f9f] uppercase text-xs tracking-wide">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Level</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Interests</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
+                    <th className="px-4 py-3 text-left">Name</th>
+                    <th className="px-4 py-3 text-left">Level</th>
+                    <th className="px-4 py-3 text-left">Interests</th>
+                    <th className="px-4 py-3 text-left">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody>
                   {students.map((student, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr key={idx} className="border-t border-[#2a2a2a] hover:bg-[#252526] transition">
                       <td className="px-4 py-3">{student.name || student.Name}</td>
                       <td className="px-4 py-3">
-                        <span className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
+                        <span className="px-3 py-1 text-xs rounded-full border border-[#007acc] text-[#9cdcfe] bg-[#094771]">
                           {student.level || student.Level || 'beginner'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      <td className="px-4 py-3 text-[#c8c8c8]">
                         {student.interests || student.Interests || 'N/A'}
                       </td>
                       <td className="px-4 py-3">
                         <button
                           onClick={() => generatePersonalizedNotes(student, 'Sample lesson content')}
-                          className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded"
+                          className="px-4 py-1.5 text-xs border border-[#1e4f2b] rounded bg-[#1e3a1e] text-[#b7f1c6] hover:bg-[#27502a] transition"
                         >
                           Generate Notes
                         </button>
@@ -167,13 +151,19 @@ const Dashboard = ({ courseId, onNavigate }) => {
 
         {/* Personalized Content Preview */}
         {Object.keys(personalizedContent).length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Personalized Content</h2>
+          <div className="bg-[#1f1f1f] border border-[#3e3e42] rounded-xl shadow-xl p-6 space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold">Personalized Content Queue</h2>
+              <p className="text-xs text-[#9f9f9f]">Review drafts before syncing with students</p>
+            </div>
             <div className="space-y-4">
               {Object.entries(personalizedContent).map(([studentName, content]) => (
-                <div key={studentName} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <h3 className="font-semibold mb-2">{studentName}</h3>
-                  <div className="prose dark:prose-invert max-w-none text-sm whitespace-pre-wrap">
+                <div key={studentName} className="border border-[#3e3e42] rounded-lg p-4 bg-[#252526] shadow-inner">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-[#9cdcfe]">{studentName}</h3>
+                    <span className="text-xs uppercase tracking-[0.2em] text-[#7f7f7f]">Draft</span>
+                  </div>
+                  <div className="text-sm whitespace-pre-wrap leading-relaxed text-[#c8c8c8]">
                     {content}
                   </div>
                 </div>
@@ -183,12 +173,12 @@ const Dashboard = ({ courseId, onNavigate }) => {
         )}
 
         {/* Content Freshness Alert */}
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+        <div className="border border-[#a8892b] rounded-lg p-4 bg-[#2b2412] flex items-start gap-3 shadow">
+          <AlertCircle className="w-5 h-5 text-[#f6e39c] mt-1" />
           <div>
-            <h3 className="font-semibold text-yellow-800 dark:text-yellow-300">Content Freshness Check</h3>
-            <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-              Some modules may need updates. Use the Content Scanner to check for outdated content.
+            <h3 className="font-semibold text-[#f6e39c]">Content Freshness Check</h3>
+            <p className="text-sm text-[#d8cfa3] mt-1">
+              Modules flagged for potential updates. Run the Content Scanner to keep material aligned with the latest AI releases.
             </p>
           </div>
         </div>

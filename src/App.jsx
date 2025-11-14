@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Sparkles, LayoutDashboard, FileText, Search, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import FileExplorer from './components/FileExplorer';
 import Editor from './components/Editor';
@@ -8,19 +8,78 @@ import Dashboard from './components/Dashboard';
 import ContentFreshnessScanner from './components/ContentFreshnessScanner';
 import AssessmentPanel from './components/AssessmentPanel';
 import storage from './services/storage';
+import geminiApi from './services/geminiApi';
+
+const buildFileTree = (entries = []) => {
+  const root = [];
+
+  const sortNodes = (nodes) => {
+    nodes.sort((a, b) => {
+      const priority = (node) => {
+        const path = node.path?.toLowerCase() || '';
+        if (node.type === 'file' && path === 'curriculum.md') return 0;
+        if (node.type === 'file' && path === 'pedagogy.md') return 1;
+        if (node.type === 'file') return 2;
+        return 3;
+      };
+      const diff = priority(a) - priority(b);
+      if (diff !== 0) return diff;
+      return a.name.localeCompare(b.name);
+    });
+
+    nodes.forEach((node) => {
+      if (node.children && node.children.length) {
+        sortNodes(node.children);
+      }
+    });
+  };
+
+  entries.forEach((entry) => {
+    const parts = entry.path.split('/');
+    let currentLevel = root;
+
+    parts.forEach((part, idx) => {
+      const fullPath = parts.slice(0, idx + 1).join('/');
+      const isFile = idx === parts.length - 1;
+
+      if (isFile) {
+        currentLevel.push({
+          name: part,
+          type: 'file',
+          path: entry.path,
+          badge: entry.badge,
+          canRefresh: entry.path.toLowerCase().includes('curriculum'),
+        });
+      } else {
+        let folder = currentLevel.find(
+          (node) => node.type === 'folder' && node.name === part
+        );
+        if (!folder) {
+          folder = { name: part, type: 'folder', path: fullPath, children: [] };
+          currentLevel.push(folder);
+        }
+        currentLevel = folder.children;
+      }
+    });
+  });
+
+  sortNodes(root);
+  return root;
+};
 
 function App() {
   const [currentCourse, setCurrentCourse] = useState(null);
   const [currentFile, setCurrentFile] = useState(null);
   const [fileContent, setFileContent] = useState('');
-  const [files, setFiles] = useState([]);
+  const [fileEntries, setFileEntries] = useState([]);
   const [isAISidebarCollapsed, setIsAISidebarCollapsed] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
-  const [diffContent, setDiffContent] = useState({ original: '', generated: '' });
+  const [diffContent, setDiffContent] = useState({ original: '', generated: '', targetPath: null, fileName: '' });
   const [view, setView] = useState('editor'); // 'editor' or 'dashboard'
   const [showContentScanner, setShowContentScanner] = useState(false);
   const [showAssessmentPanel, setShowAssessmentPanel] = useState(false);
   const [context, setContext] = useState({ curriculum: '', pedagogy: '' });
+  const [refreshingFile, setRefreshingFile] = useState(null);
 
   // Initialize with sample course or load from storage
   useEffect(() => {
@@ -28,7 +87,6 @@ function App() {
     if (courses.length > 0) {
       const course = courses[0];
       setCurrentCourse(course);
-      loadCourseFiles(course);
     } else {
       // Create sample course
       const sampleCourse = {
@@ -44,14 +102,25 @@ function App() {
     }
   }, []);
 
-  // Load context files when course changes
   useEffect(() => {
-    if (currentCourse) {
-      const curriculum = storage.getContextFile(currentCourse.id, 'curriculum.md');
-      const pedagogy = storage.getContextFile(currentCourse.id, 'pedagogy.md');
-      setContext({ curriculum, pedagogy });
+    if (!currentCourse) return;
+    const entries = storage.getFileEntries(currentCourse.id);
+    if (!entries || entries.length === 0) {
+      initializeSampleFiles(currentCourse);
+      setFileEntries(storage.getFileEntries(currentCourse.id));
+    } else {
+      setFileEntries(entries);
     }
   }, [currentCourse]);
+
+  useEffect(() => {
+    if (!currentCourse) return;
+    const curriculum = fileEntries.find((entry) => entry.path === 'curriculum.md')?.content || '';
+    const pedagogy = fileEntries.find((entry) => entry.path === 'pedagogy.md')?.content || '';
+    setContext({ curriculum, pedagogy });
+  }, [fileEntries, currentCourse]);
+
+  const fileTree = useMemo(() => buildFileTree(fileEntries), [fileEntries]);
 
   const initializeSampleFiles = (course) => {
     const sampleFiles = [
@@ -59,119 +128,164 @@ function App() {
       { name: 'pedagogy.md', type: 'file', content: '# Pedagogy Guidelines\n\n## Learning Styles\n\n[Your pedagogy guidelines here]' }
     ];
     
-    course.contextFiles = course.contextFiles || {};
     sampleFiles.forEach(file => {
-      course.contextFiles[file.name] = file.content;
+      storage.saveContextFile(course.id, file.name, file.content);
     });
-    
-    storage.saveCourse(course);
-    loadCourseFiles(course);
-  };
-
-  const loadCourseFiles = (course) => {
-    const fileTree = [
-      {
-        name: 'curriculum.md',
-        type: 'file'
-      },
-      {
-        name: 'pedagogy.md',
-        type: 'file'
-      },
-      {
-        name: 'modules',
-        type: 'folder',
-        children: course.files?.filter(f => f.startsWith('modules/'))?.map(f => ({
-          name: f.split('/').pop(),
-          type: 'file'
-        })) || []
-      },
-      {
-        name: 'assessments',
-        type: 'folder',
-        children: course.files?.filter(f => f.startsWith('assessments/'))?.map(f => ({
-          name: f.split('/').pop(),
-          type: 'file'
-        })) || []
-      },
-      {
-        name: 'resources',
-        type: 'folder',
-        children: course.files?.filter(f => f.startsWith('resources/'))?.map(f => ({
-          name: f.split('/').pop(),
-          type: 'file'
-        })) || []
-      }
-    ];
-    setFiles(fileTree);
+    setFileEntries(storage.getFileEntries(course.id));
   };
 
   const handleFileSelect = (filePath) => {
+    const entry = fileEntries.find((f) => f.path === filePath);
+    if (!entry) return;
     setCurrentFile(filePath);
-    if (currentCourse) {
-      const content = storage.getContextFile(currentCourse.id, filePath) || 
-                     (currentCourse.files?.find(f => f === filePath) ? 
-                      storage.getContextFile(currentCourse.id, filePath) : '');
-      setFileContent(content || `# ${filePath}\n\n[Start editing...]`);
+    setFileContent(entry.content || '');
+    setShowDiff(false);
+    if (entry.badge === 'new' && currentCourse) {
+      storage.clearFileBadge(currentCourse.id, filePath);
+      setFileEntries((prev) =>
+        prev.map((f) => (f.path === filePath ? { ...f, badge: null } : f))
+      );
     }
   };
 
   const handleFileSave = (content) => {
     if (currentCourse && currentFile) {
       setFileContent(content);
-      storage.saveContextFile(currentCourse.id, currentFile, content);
-      
-      // Update context if it's a context file
-      if (currentFile === 'curriculum.md') {
-        setContext(prev => ({ ...prev, curriculum: content }));
-      } else if (currentFile === 'pedagogy.md') {
-        setContext(prev => ({ ...prev, pedagogy: content }));
+      const savedEntry = storage.saveFileEntry(currentCourse.id, currentFile, content);
+      if (savedEntry) {
+        setFileEntries((prev) =>
+          prev.map((entry) => (entry.path === currentFile ? savedEntry : entry))
+        );
       }
     }
   };
 
   const handleGenerate = async (generatedContent, prompt) => {
-    // Store original content
-    const originalContent = fileContent || '';
-    
-    // Store generated content for diff view
-    setDiffContent({
-      original: originalContent,
-      generated: generatedContent
-    });
-    
-    // Show diff view
-    setShowDiff(true);
+    if (!currentCourse) return;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const defaultName = `curriculum_generated_${timestamp}.md`;
+    const desiredName = window.prompt('Enter filename for generated curriculum', defaultName) || defaultName;
+    const existingPaths = new Set(fileEntries.map((entry) => entry.path));
+    const getUniqueName = (name) => {
+      if (!existingPaths.has(name)) {
+        existingPaths.add(name);
+        return name;
+      }
+      const dotIndex = name.lastIndexOf('.');
+      const base = dotIndex >= 0 ? name.slice(0, dotIndex) : name;
+      const ext = dotIndex >= 0 ? name.slice(dotIndex) : '';
+      let counter = 1;
+      let candidate = `${base}_${counter}${ext}`;
+      while (existingPaths.has(candidate)) {
+        counter += 1;
+        candidate = `${base}_${counter}${ext}`;
+      }
+      existingPaths.add(candidate);
+      return candidate;
+    };
+    const finalName = getUniqueName(desiredName.trim() || defaultName);
+    const savedEntry = storage.saveFileEntry(currentCourse.id, finalName, generatedContent, { badge: 'new' });
+    if (savedEntry) {
+      setFileEntries((prev) => {
+        const exists = prev.some((entry) => entry.path === savedEntry.path);
+        return exists ? prev.map((entry) => (entry.path === savedEntry.path ? savedEntry : entry)) : [...prev, savedEntry];
+      });
+      setCurrentFile(savedEntry.path);
+      setFileContent(generatedContent);
+      setShowDiff(false);
+    }
   };
 
   const handleAcceptDiff = (content) => {
-    handleFileSave(content);
+    if (!currentCourse || !diffContent.targetPath) return;
+    const savedEntry = storage.saveFileEntry(currentCourse.id, diffContent.targetPath, content, { badge: null });
+    if (savedEntry) {
+      setFileEntries((prev) =>
+        prev.map((entry) => (entry.path === savedEntry.path ? savedEntry : entry))
+      );
+      if (currentFile === savedEntry.path) {
+        setFileContent(content);
+      }
+    }
     setShowDiff(false);
-    setDiffContent({ original: '', generated: '' });
+    setDiffContent({ original: '', generated: '', targetPath: null, fileName: '' });
   };
 
   const handleRejectDiff = () => {
     setShowDiff(false);
-    setDiffContent({ original: '', generated: '' });
-  };
-
-  const handleFileCreate = () => {
-    const fileName = prompt('Enter file name (e.g., modules/intro.md):');
-    if (fileName && currentCourse) {
-      storage.saveContextFile(currentCourse.id, fileName, `# ${fileName}\n\n`);
-      loadCourseFiles(currentCourse);
-      handleFileSelect(fileName);
-    }
+    setDiffContent({ original: '', generated: '', targetPath: null, fileName: '' });
   };
 
   const handleFileDelete = (filePath) => {
     if (confirm(`Delete ${filePath}?`)) {
-      // Implementation for file deletion
+      if (currentCourse) {
+        storage.deleteFileEntry(currentCourse.id, filePath);
+        setFileEntries((prev) => prev.filter((entry) => entry.path !== filePath));
+      }
       if (currentFile === filePath) {
         setCurrentFile(null);
         setFileContent('');
       }
-      loadCourseFiles(currentCourse);
+    }
+  };
+
+  const handleFileUpload = (fileList) => {
+    if (!currentCourse) return;
+    const existingPaths = new Set(fileEntries.map((entry) => entry.path));
+    const getUniqueName = (name) => {
+      if (!existingPaths.has(name)) {
+        existingPaths.add(name);
+        return name;
+      }
+      const dotIndex = name.lastIndexOf('.');
+      const base = dotIndex >= 0 ? name.slice(0, dotIndex) : name;
+      const ext = dotIndex >= 0 ? name.slice(dotIndex) : '';
+      let counter = 1;
+      let candidate = `${base}_${counter}${ext}`;
+      while (existingPaths.has(candidate)) {
+        counter += 1;
+        candidate = `${base}_${counter}${ext}`;
+      }
+      existingPaths.add(candidate);
+      return candidate;
+    };
+
+    Array.from(fileList).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result || '';
+        const uniqueName = getUniqueName(file.name.endsWith('.md') ? file.name : `${file.name}.md`);
+        storage.saveFileEntry(currentCourse.id, uniqueName, text, { createdAt: new Date().toISOString() });
+        setFileEntries(storage.getFileEntries(currentCourse.id));
+      };
+      reader.readAsText(file);
+    });
+  };
+
+  const handleRefreshFile = async (filePath) => {
+    if (!currentCourse) return;
+    const entry = fileEntries.find((f) => f.path === filePath);
+    if (!entry) return;
+    setRefreshingFile(filePath);
+    try {
+      const updatedContent = await geminiApi.generateContentRefresh(
+        entry.name,
+        entry.content,
+        context.curriculum,
+        context.pedagogy
+      );
+      setDiffContent({
+        original: entry.content,
+        generated: updatedContent,
+        targetPath: filePath,
+        fileName: entry.name,
+      });
+      setShowDiff(true);
+    } catch (error) {
+      console.error('Failed to refresh content', error);
+      alert('Unable to refresh this file. Please try again.');
+    } finally {
+      setRefreshingFile(null);
     }
   };
 
@@ -227,10 +341,12 @@ function App() {
             <div className="h-full flex overflow-hidden">
               <div className="w-[250px] shrink-0 h-full border-r border-[#3e3e42] bg-[#252526]">
                 <FileExplorer
-                  files={files}
+                  files={fileTree}
                   onFileSelect={handleFileSelect}
-                  onFileCreate={handleFileCreate}
                   onFileDelete={handleFileDelete}
+                  onFileUpload={handleFileUpload}
+                  onRefreshFile={handleRefreshFile}
+                  refreshingFile={refreshingFile}
                   selectedFile={currentFile}
                 />
               </div>
@@ -270,6 +386,7 @@ function App() {
                     <DiffView
                       original={diffContent.original}
                       generated={diffContent.generated}
+                      fileName={diffContent.fileName}
                       onAccept={handleAcceptDiff}
                       onReject={handleRejectDiff}
                     />

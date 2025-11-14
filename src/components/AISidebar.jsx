@@ -24,10 +24,11 @@ const AISidebar = ({ collapsed, onToggle, onGenerate, context }) => {
       const curriculumContext = context?.curriculum || '';
       const pedagogyContext = context?.pedagogy || '';
 
-      const generatedContent = await geminiApi.generateCurriculum(prompt, {
-        curriculum: curriculumContext,
-        pedagogy: pedagogyContext
-      });
+      const generatedContent = await geminiApi.generateLessonPlan(
+        prompt,
+        curriculumContext,
+        pedagogyContext
+      );
 
       if (onGenerate) {
         onGenerate(generatedContent, prompt);

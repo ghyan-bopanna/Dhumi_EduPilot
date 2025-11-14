@@ -2,7 +2,7 @@ import React from 'react';
 import { Check, X, Edit2 } from 'lucide-react';
 import { diffLines } from 'diff';
 
-const DiffView = ({ original = '', generated = '', onAccept, onReject }) => {
+const DiffView = ({ original = '', generated = '', onAccept, onReject, fileName }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedContent, setEditedContent] = React.useState(generated);
 
@@ -72,7 +72,9 @@ const DiffView = ({ original = '', generated = '', onAccept, onReject }) => {
       <div className="px-4 py-3 border-b border-[#3e3e42] flex items-center justify-between bg-[#1f1f1f] shadow">
         <div>
           <h3 className="text-sm font-semibold tracking-wide uppercase">Review Changes</h3>
-          <p className="text-xs text-[#9f9f9f]">Generated draft vs current file</p>
+          <p className="text-xs text-[#9f9f9f]">
+            {fileName ? `${fileName}` : 'Generated draft vs current file'}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button

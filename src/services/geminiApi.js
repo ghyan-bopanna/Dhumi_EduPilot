@@ -12,12 +12,13 @@ class GeminiService {
   }
 
   async generateCurriculum(prompt, context = {}) {
+    return this.generateLessonPlan(prompt, context.curriculum || '', context.pedagogy || '');
+  }
+
+  async generateLessonPlan(prompt, curriculumContext = '', pedagogyContext = '') {
     if (!this.model) {
       throw new Error('Gemini API key not configured. Please set VITE_GEMINI_API_KEY in .env');
     }
-
-    const curriculumContext = context.curriculum || '';
-    const pedagogyContext = context.pedagogy || '';
 
     const fullPrompt = `You are an expert curriculum designer creating a personalized learning course.
 
@@ -146,6 +147,40 @@ Format in Markdown.`;
     } catch (error) {
       console.error('Gemini API Error:', error);
       throw new Error(`Failed to check content freshness: ${error.message}`);
+    }
+  }
+
+  async generateContentRefresh(fileName, existingContent, curriculumContext = '', pedagogyContext = '') {
+    if (!this.model) {
+      throw new Error('Gemini API key not configured');
+    }
+
+    const prompt = `You are an expert curriculum editor. Refresh the following file so it reflects the latest best practices.
+
+FILE NAME: ${fileName}
+
+CURRICULUM CONTEXT:
+${curriculumContext || 'No additional curriculum context'}
+
+PEDAGOGY CONTEXT:
+${pedagogyContext || 'No additional pedagogy context'}
+
+CURRENT CONTENT:
+${existingContent}
+
+TASK:
+- Update factual information
+- Improve clarity while keeping instructor intent
+- Preserve headings and structure when possible
+- Return the entire updated markdown without commentary`;
+
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Gemini API Error:', error);
+      throw new Error(`Failed to refresh content: ${error.message}`);
     }
   }
 
