@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, LayoutDashboard, FileText, Search } from 'lucide-react';
+import { Sparkles, LayoutDashboard, FileText, Search, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import FileExplorer from './components/FileExplorer';
 import Editor from './components/Editor';
 import AISidebar from './components/AISidebar';
@@ -14,7 +14,7 @@ function App() {
   const [currentFile, setCurrentFile] = useState(null);
   const [fileContent, setFileContent] = useState('');
   const [files, setFiles] = useState([]);
-  const [showAISidebar, setShowAISidebar] = useState(false);
+  const [isAISidebarCollapsed, setIsAISidebarCollapsed] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
   const [diffContent, setDiffContent] = useState({ original: '', generated: '' });
   const [view, setView] = useState('editor'); // 'editor' or 'dashboard'
@@ -176,127 +176,134 @@ function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-blue-500" />
-            <h1 className="text-xl font-bold">Dhumi EduPilot</h1>
-          </div>
-          {currentCourse && (
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {currentCourse.name}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setView(view === 'editor' ? 'dashboard' : 'editor')}
-            className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded flex items-center gap-2"
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            {view === 'editor' ? 'Dashboard' : 'Editor'}
-          </button>
-          <button
-            onClick={() => setShowAISidebar(!showAISidebar)}
-            className="px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            AI Copilot
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      {view === 'dashboard' ? (
-        <Dashboard
-          courseId={currentCourse?.id}
-          onNavigate={(v) => setView(v)}
-        />
-      ) : (
-        <div className="flex-1 flex overflow-hidden">
-          {/* File Explorer */}
-          <div className="w-64 border-r border-gray-200 dark:border-gray-700">
-            <FileExplorer
-              files={files}
-              onFileSelect={handleFileSelect}
-              onFileCreate={handleFileCreate}
-              onFileDelete={handleFileDelete}
-              selectedFile={currentFile}
-            />
-          </div>
-
-          {/* Editor Area */}
-          <div className="flex-1 flex flex-col">
-            {/* Toolbar */}
-            <div className="h-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4">
-              <div className="flex items-center gap-2">
-                {currentFile && (
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {currentFile}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowAssessmentPanel(true)}
-                  className="px-3 py-1 text-xs bg-purple-500 hover:bg-purple-600 text-white rounded flex items-center gap-2"
-                  disabled={!currentFile}
-                >
-                  <FileText className="w-3 h-3" />
-                  Assessment
-                </button>
-                <button
-                  onClick={() => setShowContentScanner(true)}
-                  className="px-3 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded flex items-center gap-2"
-                  disabled={!currentFile}
-                >
-                  <Search className="w-3 h-3" />
-                  Check Freshness
-                </button>
-              </div>
+    <div className="min-h-screen bg-[#1e1e1e] text-[#d4d4d4] font-mono">
+      <div className="flex flex-col h-screen">
+        <header className="h-14 bg-[#1f1f1f] border-b border-[#3e3e42] flex items-center justify-between px-6 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#007acc]" />
+              <h1 className="text-lg font-semibold tracking-wide">Dhumi EduPilot</h1>
             </div>
-
-            {/* Editor or Diff View */}
-            {showDiff ? (
-              <div className="flex-1">
-                <DiffView
-                  original={diffContent.original}
-                  generated={diffContent.generated}
-                  onAccept={handleAcceptDiff}
-                  onReject={handleRejectDiff}
-                />
-              </div>
-            ) : (
-              <div className="flex-1">
-                {currentFile ? (
-                  <Editor
-                    value={fileContent}
-                    onChange={(value) => handleFileSave(value || '')}
-                    language="markdown"
-                  />
-                ) : (
-                  <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
-                    <div className="text-center">
-                      <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p>Select a file from the explorer to start editing</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {currentCourse && (
+              <span className="text-xs uppercase tracking-wide text-[#9f9f9f]">
+                {currentCourse.name}
+              </span>
             )}
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setView(view === 'editor' ? 'dashboard' : 'editor')}
+              className="px-3 py-1.5 text-xs border border-[#3e3e42] rounded bg-[#252526] hover:border-[#007acc] flex items-center gap-2 transition"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              {view === 'editor' ? 'Dashboard' : 'Editor'}
+            </button>
+            <button
+              onClick={() => setIsAISidebarCollapsed((prev) => !prev)}
+              className="px-3 py-1.5 text-xs border border-[#3e3e42] rounded bg-[#252526] hover:border-[#007acc] flex items-center gap-2 transition"
+            >
+              {isAISidebarCollapsed ? (
+                <>
+                  <PanelRightOpen className="w-4 h-4" />
+                  Show Copilot
+                </>
+              ) : (
+                <>
+                  <PanelRightClose className="w-4 h-4" />
+                  Hide Copilot
+                </>
+              )}
+            </button>
+          </div>
+        </header>
 
-          {/* AI Sidebar */}
-          <AISidebar
-            isOpen={showAISidebar}
-            onClose={() => setShowAISidebar(false)}
-            onGenerate={handleGenerate}
-            context={context}
-          />
+        <div className="flex-1 overflow-hidden">
+          {view === 'dashboard' ? (
+            <Dashboard
+              courseId={currentCourse?.id}
+              onNavigate={(v) => setView(v)}
+            />
+          ) : (
+            <div className="h-full flex overflow-hidden">
+              <div className="w-[250px] shrink-0 h-full border-r border-[#3e3e42] bg-[#252526]">
+                <FileExplorer
+                  files={files}
+                  onFileSelect={handleFileSelect}
+                  onFileCreate={handleFileCreate}
+                  onFileDelete={handleFileDelete}
+                  selectedFile={currentFile}
+                />
+              </div>
+
+              <div className="flex-1 flex flex-col border-r border-[#3e3e42] bg-[#1e1e1e]">
+                <div className="h-12 border-b border-[#3e3e42] px-4 flex items-center justify-between bg-[#1f1f1f]">
+                  <div className="flex items-center gap-2 text-xs text-[#9f9f9f]">
+                    {currentFile ? (
+                      <>
+                        <span className="text-[#d4d4d4]">{currentFile}</span>
+                        {showDiff && <span className="text-[#007acc]">• Reviewing draft</span>}
+                      </>
+                    ) : (
+                      <span>Select a file to begin</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowAssessmentPanel(true)}
+                      className="px-3 py-1 text-xs border border-[#5d2a86] rounded bg-[#2b1d35] text-[#d6b2ff] hover:border-[#bb86fc] disabled:opacity-40 disabled:cursor-not-allowed"
+                      disabled={!currentFile}
+                    >
+                      Assess
+                    </button>
+                    <button
+                      onClick={() => setShowContentScanner(true)}
+                      className="px-3 py-1 text-xs border border-[#a8892b] rounded bg-[#3a2c0f] text-[#f6e39c] hover:border-[#f6d85f] disabled:opacity-40 disabled:cursor-not-allowed"
+                      disabled={!currentFile}
+                    >
+                      Freshness
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-hidden">
+                  {showDiff ? (
+                    <DiffView
+                      original={diffContent.original}
+                      generated={diffContent.generated}
+                      onAccept={handleAcceptDiff}
+                      onReject={handleRejectDiff}
+                    />
+                  ) : (
+                    <div className="h-full">
+                      {currentFile ? (
+                        <Editor
+                          value={fileContent}
+                          onChange={(value) => handleFileSave(value || '')}
+                          language="markdown"
+                        />
+                      ) : (
+                        <div className="h-full flex items-center justify-center text-[#9f9f9f]">
+                          <div className="text-center space-y-2">
+                            <FileText className="w-12 h-12 mx-auto text-[#3e3e42]" />
+                            <p>Select a file from the explorer to start editing</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <AISidebar
+                collapsed={isAISidebarCollapsed}
+                onToggle={() => setIsAISidebarCollapsed((prev) => !prev)}
+                onGenerate={handleGenerate}
+                context={context}
+              />
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Modals */}
       {showContentScanner && (

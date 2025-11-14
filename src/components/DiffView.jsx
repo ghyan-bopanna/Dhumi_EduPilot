@@ -1,112 +1,161 @@
 import React from 'react';
 import { Check, X, Edit2 } from 'lucide-react';
+import { diffLines } from 'diff';
 
-const DiffView = ({ original, generated, onAccept, onReject, onEdit }) => {
-  const [editedContent, setEditedContent] = React.useState(generated);
+const DiffView = ({ original = '', generated = '', onAccept, onReject }) => {
   const [isEditing, setIsEditing] = React.useState(false);
+  const [editedContent, setEditedContent] = React.useState(generated);
 
   React.useEffect(() => {
     setEditedContent(generated);
   }, [generated]);
 
-  const handleAccept = () => {
-    if (onAccept) {
-      onAccept(editedContent);
-    }
-  };
+  const rows = React.useMemo(() => {
+    const diff = diffLines(original, generated);
+    let leftLine = 1;
+    let rightLine = 1;
+    const mapped = [];
 
-  const handleReject = () => {
-    if (onReject) {
-      onReject();
-    }
-  };
+    diff.forEach((part) => {
+      const value = part.value ?? '';
+      const lines = value.split('\n');
+      if (lines[lines.length - 1] === '') {
+        lines.pop();
+      }
+      if (lines.length === 0) {
+        lines.push('');
+      }
 
-  const handleEdit = () => {
-    if (isEditing) {
-      setIsEditing(false);
-    } else {
-      setIsEditing(true);
-    }
-  };
+      lines.forEach((line) => {
+        if (part.added) {
+          mapped.push({
+            leftNumber: '',
+            rightNumber: rightLine++,
+            leftText: '',
+            rightText: line,
+            type: 'added',
+          });
+        } else if (part.removed) {
+          mapped.push({
+            leftNumber: leftLine++,
+            rightNumber: '',
+            leftText: line,
+            rightText: '',
+            type: 'removed',
+          });
+        } else {
+          mapped.push({
+            leftNumber: leftLine++,
+            rightNumber: rightLine++,
+            leftText: line,
+            rightText: line,
+            type: 'unchanged',
+          });
+        }
+      });
+    });
 
-  // Simple diff viewer using text comparison
-  const renderDiff = () => {
-    const originalLines = original.split('\n');
-    const generatedLines = generated.split('\n');
-    const maxLines = Math.max(originalLines.length, generatedLines.length);
+    return mapped;
+  }, [original, generated]);
 
-    return (
-      <div className="space-y-2">
-        {Array.from({ length: maxLines }).map((_, idx) => {
-          const origLine = originalLines[idx] || '';
-          const genLine = generatedLines[idx] || '';
-          const isDifferent = origLine !== genLine;
+  const handleAccept = () => onAccept?.(editedContent);
+  const handleReject = () => onReject?.();
 
-          return (
-            <div key={idx} className="flex gap-2">
-              <div className={`flex-1 p-2 ${isDifferent && origLine ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-50 dark:bg-gray-800'}`}>
-                <span className="text-xs text-gray-400">{idx + 1}</span>
-                <pre className="text-sm mt-1">{origLine || <span className="text-gray-400">(empty)</span>}</pre>
-              </div>
-              <div className={`flex-1 p-2 ${isDifferent && genLine ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-800'}`}>
-                <span className="text-xs text-gray-400">{idx + 1}</span>
-                <pre className="text-sm mt-1">{genLine || <span className="text-gray-400">(empty)</span>}</pre>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
+  const typeStyles = {
+    added: 'bg-[#1e3a1e] text-[#cfeecf]',
+    removed: 'bg-[#3a1e1e] text-[#f5bebe]',
+    unchanged: 'bg-transparent text-[#d4d4d4]',
   };
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <h3 className="font-semibold">Review Changes</h3>
+    <div className="h-full flex flex-col bg-[#1e1e1e] text-[#d4d4d4]">
+      <div className="px-4 py-3 border-b border-[#3e3e42] flex items-center justify-between bg-[#1f1f1f] shadow">
+        <div>
+          <h3 className="text-sm font-semibold tracking-wide uppercase">Review Changes</h3>
+          <p className="text-xs text-[#9f9f9f]">Generated draft vs current file</p>
+        </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={handleEdit}
-            className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded flex items-center gap-2"
+            onClick={() => setIsEditing((prev) => !prev)}
+            className="px-3 py-1.5 text-xs border border-[#3e3e42] rounded bg-[#252526] hover:border-[#007acc] flex items-center gap-2 transition"
           >
-            <Edit2 className="w-4 h-4" />
-            {isEditing ? 'View Diff' : 'Edit'}
+            <Edit2 className="w-3 h-3" />
+            {isEditing ? 'Back to Diff' : 'Edit Draft'}
           </button>
           <button
             onClick={handleReject}
-            className="px-3 py-1.5 text-sm bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded flex items-center gap-2"
+            className="px-4 py-1.5 text-xs border border-[#f14c4c] text-[#f48771] rounded bg-[#3a1e1e] hover:bg-[#4b2323] transition flex items-center gap-2"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3" />
             Reject
           </button>
           <button
             onClick={handleAccept}
-            className="px-3 py-1.5 text-sm bg-green-100 dark:bg-green-900/20 hover:bg-green-200 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 rounded flex items-center gap-2"
+            className="px-4 py-1.5 text-xs border border-[#1e4f2b] text-[#b7f1c6] rounded bg-[#1e3a1e] hover:bg-[#27502a] transition flex items-center gap-2"
           >
-            <Check className="w-4 h-4" />
+            <Check className="w-3 h-3" />
             Accept
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-hidden">
         {isEditing ? (
           <textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="w-full h-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
+            className="w-full h-full bg-[#1e1e1e] border-none outline-none p-4 text-sm font-mono text-[#d4d4d4]"
           />
         ) : (
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-            <div className="grid grid-cols-2 gap-0">
-              <div className="bg-gray-50 dark:bg-gray-800 p-2 border-r border-gray-200 dark:border-gray-700">
-                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400">Original</div>
+          <div className="h-full grid grid-cols-2 gap-4 p-4 overflow-hidden">
+            <div className="flex flex-col border border-[#3e3e42] rounded bg-[#1f1f1f] overflow-hidden shadow-inner">
+              <div className="px-3 py-2 border-b border-[#3e3e42] text-xs uppercase tracking-wide text-[#9f9f9f] bg-[#252526]">
+                Original
               </div>
-              <div className="bg-gray-50 dark:bg-gray-800 p-2">
-                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400">Generated</div>
+              <div className="flex-1 overflow-auto">
+                {rows.map((row, idx) => (
+                  <div
+                    key={`left-${idx}`}
+                    className="grid grid-cols-[70px_1fr] text-xs font-mono border-b border-[#2a2a2a] last:border-b-0"
+                  >
+                    <div className="px-2 py-1 text-right text-[#858585] bg-[#1a1a1a] border-r border-[#2a2a2a]">
+                      {row.leftNumber || ''}
+                    </div>
+                    <pre
+                      className={`px-3 py-1 whitespace-pre-wrap ${
+                        row.type === 'removed' ? typeStyles.removed : typeStyles.unchanged
+                      }`}
+                    >
+                      {row.leftText || ''}
+                    </pre>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
-              {renderDiff()}
+
+            <div className="flex flex-col border border-[#3e3e42] rounded bg-[#1f1f1f] overflow-hidden shadow-inner">
+              <div className="px-3 py-2 border-b border-[#3e3e42] text-xs uppercase tracking-wide text-[#9f9f9f] bg-[#252526]">
+                Generated
+              </div>
+              <div className="flex-1 overflow-auto">
+                {rows.map((row, idx) => (
+                  <div
+                    key={`right-${idx}`}
+                    className="grid grid-cols-[70px_1fr] text-xs font-mono border-b border-[#2a2a2a] last:border-b-0"
+                  >
+                    <div className="px-2 py-1 text-right text-[#858585] bg-[#1a1a1a] border-r border-[#2a2a2a]">
+                      {row.rightNumber || ''}
+                    </div>
+                    <pre
+                      className={`px-3 py-1 whitespace-pre-wrap ${
+                        row.type === 'added' ? typeStyles.added : typeStyles.unchanged
+                      }`}
+                    >
+                      {row.rightText || ''}
+                    </pre>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

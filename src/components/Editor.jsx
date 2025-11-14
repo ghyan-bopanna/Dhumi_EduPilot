@@ -16,17 +16,18 @@ const CodeEditor = ({ value, onChange, language = 'markdown', readOnly = false }
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full bg-[#1e1e1e]">
       <Editor
         height="100%"
         language={language}
         value={value}
         onChange={handleChange}
         onMount={handleEditorDidMount}
-        theme="vs"
+        theme="vs-dark"
         options={{
           minimap: { enabled: true },
           fontSize: 14,
+          fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
           lineNumbers: 'on',
           readOnly,
           wordWrap: 'on',
@@ -34,6 +35,14 @@ const CodeEditor = ({ value, onChange, language = 'markdown', readOnly = false }
           scrollBeyondLastLine: false,
           formatOnPaste: true,
           formatOnType: true,
+          smoothScrolling: true,
+          cursorBlinking: 'smooth',
+          renderLineHighlight: 'all',
+          padding: { top: 16 },
+          scrollbar: {
+            verticalScrollbarSize: 8,
+            horizontalScrollbarSize: 8
+          }
         }}
       />
     </div>

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Send, Loader2, Sparkles, X } from 'lucide-react';
+import { Send, Loader2, Sparkles, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import geminiApi from '../services/geminiApi';
 
-const AISidebar = ({ isOpen, onClose, onGenerate, context }) => {
+const AISidebar = ({ collapsed, onToggle, onGenerate, context }) => {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
@@ -46,86 +46,107 @@ const AISidebar = ({ isOpen, onClose, onGenerate, context }) => {
     setPrompt(example);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-xl z-50 flex flex-col">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-blue-500" />
-          <h2 className="font-semibold">AI Copilot</h2>
+    <div
+      className={`h-full border-l border-[#3e3e42] bg-[#1f1f1f] text-[#d4d4d4] transition-all duration-300 ease-in-out shadow-xl flex flex-col ${
+        collapsed ? 'w-12' : 'w-[350px]'
+      }`}
+    >
+      {collapsed ? (
+        <div className="flex-1 flex flex-col items-center justify-between py-4">
+          <button
+            onClick={onToggle}
+            className="p-2 rounded border border-transparent hover:border-[#007acc] hover:bg-[#252526] transition"
+            title="Expand AI Copilot"
+          >
+            <PanelRightOpen className="w-5 h-5 text-[#d4d4d4]" />
+          </button>
+          <div className="text-[10px] uppercase tracking-[0.3em] rotate-90 text-[#a0a0a0]">AI Copilot</div>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Describe your module
-          </label>
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="e.g., RAG module, intermediate, 5 days"
-            className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
-            disabled={isGenerating}
-          />
-        </div>
-
-        {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
-            {error}
+      ) : (
+        <>
+          <div className="px-4 py-3 border-b border-[#3e3e42] flex items-center justify-between shadow">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#007acc]" />
+              <div>
+                <h2 className="font-semibold text-sm">AI Copilot</h2>
+                <p className="text-xs text-[#9f9f9f]">Generate curriculum instantly</p>
+              </div>
+            </div>
+            <button
+              onClick={onToggle}
+              className="p-1 rounded hover:bg-[#252526]"
+              title="Collapse sidebar"
+            >
+              <PanelRightClose className="w-4 h-4" />
+            </button>
           </div>
-        )}
 
-        <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Example prompts:</p>
-          <div className="space-y-2">
-            {examplePrompts.map((example, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleExampleClick(example)}
-                className="w-full text-left px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded border border-gray-200 dark:border-gray-700 transition"
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="block text-xs tracking-wide text-[#9f9f9f] uppercase">
+                Describe your module
+              </label>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="RAG module, intermediate, 5 days"
+                className="w-full h-32 p-3 bg-[#1e1e1e] border border-[#3e3e42] rounded focus:outline-none focus:ring-2 focus:ring-[#007acc] resize-none text-sm"
                 disabled={isGenerating}
-              >
-                {example}
-              </button>
-            ))}
-          </div>
-        </div>
+              />
+            </div>
 
-        {isGenerating && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Generating your curriculum...</span>
-          </div>
-        )}
-      </div>
+            {error && (
+              <div className="p-3 bg-[#3a1e1e] border border-[#f14c4c] rounded text-sm text-[#f48771]">
+                {error}
+              </div>
+            )}
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={handleGenerate}
-          disabled={!prompt.trim() || isGenerating}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Send className="w-4 h-4" />
-              Generate
-            </>
-          )}
-        </button>
-      </div>
+            <div>
+              <p className="text-xs text-[#9f9f9f] uppercase tracking-wide mb-2">Example prompts</p>
+              <div className="space-y-2">
+                {examplePrompts.map((example, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleExampleClick(example)}
+                    className="w-full text-left px-3 py-2 text-sm bg-[#252526] border border-[#3e3e42] hover:border-[#007acc] rounded transition"
+                    disabled={isGenerating}
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {isGenerating && (
+              <div className="flex items-center gap-2 text-xs text-[#9f9f9f]">
+                <Loader2 className="w-4 h-4 animate-spin text-[#007acc]" />
+                <span>Generating your curriculum...</span>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 border-t border-[#3e3e42] bg-[#1e1e1e]">
+            <button
+              onClick={handleGenerate}
+              disabled={!prompt.trim() || isGenerating}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#007acc] hover:bg-[#1392d4] disabled:bg-[#555] disabled:cursor-not-allowed text-white rounded transition font-semibold"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Generate Curriculum
+                </>
+              )}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

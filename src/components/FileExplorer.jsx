@@ -24,18 +24,18 @@ const FileExplorer = ({ files, onFileSelect, onFileCreate, onFileDelete, selecte
         return (
           <div key={item.name} className="select-none">
             <div
-              className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer rounded"
+              className="flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-[#2d2d30] transition"
               onClick={() => toggleFolder(item.name)}
             >
               {isExpanded ? (
-                <FolderOpen className="w-4 h-4 text-blue-500" />
+                <FolderOpen className="w-4 h-4 text-[#c5c5c5]" />
               ) : (
-                <Folder className="w-4 h-4 text-blue-500" />
+                <Folder className="w-4 h-4 text-[#c5c5c5]" />
               )}
-              <span className="text-sm font-medium">{item.name}</span>
+              <span className="text-sm font-medium text-[#d4d4d4]">{item.name}</span>
             </div>
             {isExpanded && item.children && (
-              <div className="ml-4">
+              <div className="ml-4 border-l border-[#3e3e42] pl-2">
                 {renderFileTree(item.children, fullPath)}
               </div>
             )}
@@ -45,16 +45,16 @@ const FileExplorer = ({ files, onFileSelect, onFileCreate, onFileDelete, selecte
         return (
           <div
             key={fullPath}
-            className={`flex items-center gap-2 px-2 py-1 cursor-pointer rounded group ${
-              isSelected ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+            className={`flex items-center gap-2 px-2 py-1 cursor-pointer rounded group transition ${
+              isSelected ? 'bg-[#094771] text-white' : 'hover:bg-[#2d2d30]'
             }`}
             onClick={() => onFileSelect(fullPath)}
           >
-            <File className="w-4 h-4 text-gray-500" />
+            <File className="w-4 h-4 text-[#9cdcfe]" />
             <span className="text-sm flex-1">{item.name}</span>
             {onFileDelete && (
               <Trash2
-                className="w-3 h-3 opacity-0 group-hover:opacity-100 text-red-500"
+                className="w-3 h-3 opacity-0 group-hover:opacity-100 text-[#f14c4c]"
                 onClick={(e) => {
                   e.stopPropagation();
                   onFileDelete(fullPath);
@@ -94,20 +94,20 @@ const FileExplorer = ({ files, onFileSelect, onFileCreate, onFileDelete, selecte
   ];
 
   return (
-    <div className="h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <h3 className="font-semibold text-sm">Files</h3>
+    <div className="h-full bg-[#252526] text-[#d4d4d4] border-r border-[#3e3e42] flex flex-col shadow-inner">
+      <div className="p-3 border-b border-[#3e3e42] flex items-center justify-between">
+        <h3 className="font-semibold text-sm tracking-wide">FILES</h3>
         {onFileCreate && (
           <button
             onClick={onFileCreate}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+            className="p-1 hover:bg-[#2d2d30] rounded border border-transparent hover:border-[#3e3e42]"
             title="Create new file"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-[#d4d4d4]" />
           </button>
         )}
       </div>
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-2 text-sm leading-relaxed">
         {renderFileTree(fileTree)}
       </div>
     </div>
