@@ -14,7 +14,7 @@ An AI-powered platform that helps instructors create personalized, up-to-date ed
 - **Frontend**: React + Vite, TailwindCSS, Monaco Editor
 - **AI/LLM**: Google Gemini API (free tier available)
 - **Storage**: LocalStorage (can be upgraded to Firebase/Supabase)
-- **Deployment**: Vercel or Netlify (free tier)
+
 
 ## Setup
 
