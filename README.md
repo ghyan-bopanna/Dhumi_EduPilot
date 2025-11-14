@@ -6,10 +6,8 @@ An AI-powered platform that helps instructors create personalized, up-to-date ed
 
 - **Curriculum-Aware Generation**: Generate complete lesson plans using Gemini AI with context from curriculum.md and pedagogy.md
 - **Human-in-the-Loop Editing**: Review and edit AI-generated content with side-by-side diff view
-- **Personalized Content Engine**: Generate tailored pre-read and post-read notes for each student
-- **Assessment Tools**: Create project rubrics, auto-graded code notebooks, and peer review prompts
 - **Content Freshness Scanner**: Check if content needs updates based on latest developments
-- **Student Management**: Upload CSV files with student profiles and generate personalized content
+
 
 ## Tech Stack
 
@@ -26,7 +24,7 @@ An AI-powered platform that helps instructors create personalized, up-to-date ed
    ```
 
 2. **Get a free Gemini API key:**
-   - Visit https://ai.google.dev/
+   - Visit [https://ai.google.dev/](https://aistudio.google.com/api-keys)
    - Create a free API key
    - Free tier: 15 requests/minute, 1500 requests/day
 
@@ -59,37 +57,10 @@ An AI-powered platform that helps instructors create personalized, up-to-date ed
    - Review the generated content in the diff view
    - Accept, reject, or edit the content
 
-3. **Manage Students**:
-   - Go to Dashboard
-   - Upload a CSV file with student profiles
-   - Generate personalized notes for each student
-
-4. **Create Assessments**:
-   - Open a lesson file
-   - Click "Assessment" button
-   - Choose assessment type (Project Rubric, Code Notebook, Peer Review)
-   - Generate and review
-
-5. **Check Content Freshness**:
+3. **Check Content Freshness**:
    - Open a content file
    - Click "Check Freshness"
    - Review flagged outdated sections
-
-## CSV Format for Students
-
-Your CSV should include these columns:
-- `name` or `Name`: Student name
-- `level` or `Level`: beginner/intermediate/advanced
-- `interests` or `Interests`: Student interests
-- `learningStyle` or `LearningStyle`: Learning style preference
-- `scores` or `Scores`: Previous quiz scores
-
-Example:
-```csv
-name,level,interests,learningStyle,scores
-John Doe,intermediate,AI,visual,85
-Jane Smith,beginner,Web Dev,auditory,72
-```
 
 ## Project Structure
 
@@ -112,7 +83,6 @@ src/
 
 - Gemini API: 15 requests/minute, 1500 requests/day
 - LocalStorage: ~5-10MB (sufficient for demo)
-- Vercel/Netlify: 100GB bandwidth/month
 
 ## Future Enhancements
 
@@ -123,11 +93,4 @@ src/
 - Vector search for better context
 - Real-time collaboration
 
-## License
-
-MIT
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
