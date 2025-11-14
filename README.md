@@ -93,4 +93,11 @@ src/
 - Vector search for better context
 - Real-time collaboration
 
+## 🎥 Watch Demo
+
+<iframe width="560" height="315" 
+src="https://www.youtube.com/embed/tUhN6dBsyqI" 
+frameborder="0" allowfullscreen></iframe>
+
+
 
